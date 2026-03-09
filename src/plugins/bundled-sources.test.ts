@@ -103,6 +103,26 @@ describe("bundled plugin sources", () => {
     expect(missing).toBeUndefined();
   });
 
+  it("supports legacy feishu-cn npm spec alias", () => {
+    const bundled = new Map([
+      [
+        "feishu",
+        {
+          pluginId: "feishu",
+          localPath: "/app/extensions/feishu",
+          npmSpec: "@openclaw/feishu",
+        },
+      ],
+    ]);
+
+    expect(
+      findBundledPluginSourceInMap({
+        bundled,
+        lookup: { kind: "npmSpec", value: "@openclaw/feishu-cn" },
+      })?.pluginId,
+    ).toBe("feishu");
+  });
+
   it("finds bundled source by plugin id", () => {
     discoverOpenClawPluginsMock.mockReturnValue({
       candidates: [

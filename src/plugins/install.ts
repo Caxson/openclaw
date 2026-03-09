@@ -35,6 +35,7 @@ import {
   resolvePackageExtensionEntries,
   type PackageManifest as PluginPackageManifest,
 } from "./manifest.js";
+import { resolveCompatiblePluginNpmSpec } from "./npm-spec-compat.js";
 
 type PluginInstallLogger = {
   info?: (message: string) => void;
@@ -497,7 +498,7 @@ export async function installPluginFromNpmSpec(params: {
 }): Promise<InstallPluginResult> {
   const { logger, timeoutMs, mode, dryRun } = resolveTimedInstallModeOptions(params, defaultLogger);
   const expectedPluginId = params.expectedPluginId;
-  const spec = params.spec.trim();
+  const spec = resolveCompatiblePluginNpmSpec(params.spec);
   const specError = validateRegistryNpmSpec(spec);
   if (specError) {
     return {

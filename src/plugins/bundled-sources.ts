@@ -1,5 +1,6 @@
 import { discoverOpenClawPlugins } from "./discovery.js";
 import { loadPluginManifest } from "./manifest.js";
+import { resolveCompatiblePluginNpmSpec } from "./npm-spec-compat.js";
 
 export type BundledPluginSource = {
   pluginId: string;
@@ -15,7 +16,7 @@ export function findBundledPluginSourceInMap(params: {
   bundled: ReadonlyMap<string, BundledPluginSource>;
   lookup: BundledPluginLookup;
 }): BundledPluginSource | undefined {
-  const targetValue = params.lookup.value.trim();
+  const targetValue = resolveCompatiblePluginNpmSpec(params.lookup.value);
   if (!targetValue) {
     return undefined;
   }
@@ -23,7 +24,7 @@ export function findBundledPluginSourceInMap(params: {
     return params.bundled.get(targetValue);
   }
   for (const source of params.bundled.values()) {
-    if (source.npmSpec === targetValue) {
+    if (source.npmSpec && resolveCompatiblePluginNpmSpec(source.npmSpec) === targetValue) {
       return source;
     }
   }

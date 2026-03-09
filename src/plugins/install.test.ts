@@ -859,6 +859,60 @@ describe("installPluginFromNpmSpec", () => {
     }
   });
 
+  it("maps legacy feishu-cn npm spec to the feishu package", async () => {
+    const run = vi.mocked(runCommandWithTimeout);
+    const voiceCallArchiveBuffer = VOICE_CALL_ARCHIVE_V1_BUFFER;
+
+    let packTmpDir = "";
+    const packedName = "feishu-2026.3.8.tgz";
+    run.mockImplementation(async (argv, opts) => {
+      if (argv[0] === "npm" && argv[1] === "pack") {
+        packTmpDir = String(typeof opts === "number" ? "" : (opts.cwd ?? ""));
+        fs.writeFileSync(path.join(packTmpDir, packedName), voiceCallArchiveBuffer);
+        return {
+          code: 0,
+          stdout: JSON.stringify([
+            {
+              id: "@openclaw/feishu@2026.3.8",
+              name: "@openclaw/feishu",
+              version: "2026.3.8",
+              filename: packedName,
+              integrity: "sha512-feishu",
+              shasum: "feishushasum",
+            },
+          ]),
+          stderr: "",
+          signal: null,
+          killed: false,
+          termination: "exit",
+        };
+      }
+      throw new Error(`unexpected command: ${argv.join(" ")}`);
+    });
+
+    const { extensionsDir } = await setupVoiceCallArchiveInstall({
+      outName: packedName,
+      version: "0.0.1",
+    });
+    const result = await installPluginFromNpmSpec({
+      spec: "@openclaw/feishu-cn",
+      extensionsDir,
+      logger: { info: () => {}, warn: () => {} },
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.npmResolution?.resolvedSpec).toBe("@openclaw/feishu@2026.3.8");
+    expectSingleNpmPackIgnoreScriptsCall({
+      calls: run.mock.calls,
+      expectedSpec: "@openclaw/feishu",
+    });
+    expect(packTmpDir).not.toBe("");
+  });
+
   it("rejects bare npm specs that resolve to prerelease versions", async () => {
     const run = vi.mocked(runCommandWithTimeout);
     mockNpmPackMetadataResult(run, {
